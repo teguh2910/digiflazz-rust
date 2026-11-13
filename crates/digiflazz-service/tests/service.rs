@@ -26,6 +26,7 @@ fn config(base_url: String, production: bool, ttl: Duration) -> Config {
         api_token: TOKEN.to_owned(),
         port: 0,
         price_list_ttl: ttl,
+        cors_origins: Vec::new(),
     }
 }
 

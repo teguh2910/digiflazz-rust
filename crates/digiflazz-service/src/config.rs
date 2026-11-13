@@ -19,6 +19,8 @@ pub struct Config {
     pub port: u16,
     /// How long a price list entry stays fresh.
     pub price_list_ttl: Duration,
+    /// Browser origins allowed to call the API. Empty disables CORS.
+    pub cors_origins: Vec<String>,
 }
 
 /// Environment variables the service needs, reported together when missing.
@@ -108,8 +110,19 @@ impl Config {
             api_token,
             port,
             price_list_ttl,
+            cors_origins: parse_origins(std::env::var("CORS_ORIGINS").ok()),
         })
     }
+}
+
+/// Splits a comma-separated origin list, dropping blanks.
+fn parse_origins(raw: Option<String>) -> Vec<String> {
+    raw.unwrap_or_default()
+        .split(',')
+        .map(str::trim)
+        .filter(|origin| !origin.is_empty())
+        .map(str::to_owned)
+        .collect()
 }
 
 #[cfg(test)]

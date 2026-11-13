@@ -72,6 +72,7 @@ Image memakai user non-root (`app`, uid 10001), sudah menyertakan
 | `PORT` | – | `8080` | port listen |
 | `PRICE_LIST_TTL_SECS` | – | `300` | TTL cache price list |
 | `RUST_LOG` | – | `info,digiflazz_service=debug` | filter log |
+| `CORS_ORIGINS` | – | kosong | origin browser yang diizinkan, dipisah koma |
 
 Service **menolak start** kalau ada variabel wajib yang kosong, atau kalau
 `SERVICE_API_TOKEN` kurang dari 16 karakter. Pesan errornya menyebutkan semua
@@ -98,6 +99,35 @@ diterima.
 
 Perilaku yang sudah diuji: `/balance` tanpa token → `401`, dengan token benar →
 `200`. `/health` tanpa token tetap `200`.
+
+### CORS (khusus klien browser)
+
+CORS **mati secara default**: tanpa konfigurasi, semua request cross-origin
+ditolak. Untuk mengaktifkan, isi `CORS_ORIGINS` (dipisah koma, pencocokan
+persis, tanpa wildcard):
+
+```sh
+CORS_ORIGINS=https://app.example.com,https://dfsdk.ttmi.my.id
+```
+
+Yang diizinkan ketika origin cocok:
+
+| Header | Nilai |
+|---|---|
+| `access-control-allow-origin` | origin pemanggil (bukan `*`) |
+| `access-control-allow-methods` | `GET, POST, OPTIONS` |
+| `access-control-allow-headers` | `authorization, content-type, accept` |
+| `access-control-expose-headers` | `x-request-id` |
+| `access-control-max-age` | `600` |
+
+Origin yang tidak terdaftar tidak menerima `access-control-allow-origin`,
+sehingga browser memblokir responsnya.
+
+> **Peringatan keamanan.** Bearer token di JavaScript browser bisa dibaca siapa
+> saja lewat devtools, lalu dipakai memanggil API ini. Jangan menaruh token
+> service utama di frontend, dan jangan pernah mengekspos `POST /transaction`
+> atau `POST /deposit` ke browser. Pola yang disarankan: browser → backend Anda
+> (auth sesi) → service ini (bearer, server-to-server). Detail: `deploy/README.md`.
 
 ---
 

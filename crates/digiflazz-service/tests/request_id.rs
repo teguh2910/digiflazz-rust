@@ -9,6 +9,10 @@ use digiflazz_service::{routes, Config};
 use tower::ServiceExt;
 
 fn app(base_url: String) -> axum::Router {
+    app_with_origins(base_url, Vec::new())
+}
+
+fn app_with_origins(base_url: String, cors_origins: Vec<String>) -> axum::Router {
     let config = Config {
         username: "user".to_owned(),
         api_key: "key".to_owned(),
@@ -17,6 +21,7 @@ fn app(base_url: String) -> axum::Router {
         api_token: "test-token-at-least-16".to_owned(),
         port: 0,
         price_list_ttl: Duration::from_secs(300),
+        cors_origins,
     };
 
     routes::router(AppState::new(config).unwrap())
