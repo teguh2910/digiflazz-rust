@@ -49,6 +49,11 @@ curl -i -X OPTIONS https://dfsdk.ttmi.my.id/transaction \
 
 The config is committed at `deploy/nginx/dfsdk.ttmi.my.id.conf`.
 
+**It is HTTP-only on purpose.** `certbot --nginx` runs `nginx -t` *before* it
+issues a certificate, so a `443` block pointing at a not-yet-existing
+`fullchain.pem` makes both `nginx -t` and certbot fail. Do not add a TLS block
+by hand before the certificate exists.
+
 ```sh
 cd /home/ubuntu/app/digiflazz-rust
 
@@ -57,8 +62,17 @@ sudo ln -sf /etc/nginx/sites-available/dfsdk.ttmi.my.id.conf /etc/nginx/sites-en
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-At this point the port 80 block exists but the certificate does not, so open
-HTTPS will fail until the next step.
+If a broken (TLS-referencing) site is already enabled, remove it before
+reloading, otherwise nginx keeps running on its old in-memory config and the
+next reload or reboot will take **every** site on the host down:
+
+```sh
+sudo rm -f /etc/nginx/sites-enabled/dfsdk.ttmi.my.id.conf
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+At this point the site answers on plain HTTP (proxying to the service), which
+is enough for the next step.
 
 ## 4. Issue the certificate (needs sudo)
 
@@ -66,7 +80,8 @@ HTTPS will fail until the next step.
 sudo certbot --nginx -d dfsdk.ttmi.my.id
 ```
 
-certbot rewrites the config to the final form and sets up renewal. Confirm:
+certbot edits the site file itself, adding the `443` block and redirect. Then
+confirm:
 
 ```sh
 sudo nginx -t && sudo systemctl reload nginx
