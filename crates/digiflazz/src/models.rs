@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::de;
 
 /// Which price list to fetch.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum PriceListKind {
     /// Prepaid products (pulsa, data, games, ...).

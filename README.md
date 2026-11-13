@@ -1,15 +1,103 @@
-# Digiflazz Client Library
+# Digiflazz Client Library & Service
 
-Unofficial async Rust client and CLI for the [Digiflazz](https://digiflazz.com) buyer API.
+Unofficial Rust client, CLI, and HTTP microservice for the
+[Digiflazz](https://digiflazz.com) buyer API.
+
+This repository is a Cargo workspace:
+
+| Crate | Path | Purpose |
+|---|---|---|
+| `digiflazz` | `crates/digiflazz` | Async SDK + `digiflazz` CLI |
+| `digiflazz-service` | `crates/digiflazz-service` | HTTP microservice (axum) |
+
+> Integrating a client? Read **[INTEGRATION.md](INTEGRATION.md)** — it documents
+> the endpoint contracts, error mapping, `rc` retry safety, and the `testing`
+> flag behaviour.
+
+## Service
+
+Runs an HTTP API in front of the SDK, with bearer auth and a cached price list.
+
+```sh
+SERVICE_API_TOKEN=change-me-at-least-16 \
+DIGIFLAZZ_USERNAME=your-username \
+DIGIFLAZZ_API_KEY=your-key \
+cargo run -p digiflazz-service
+```
+
+### Endpoints
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/health` | no | Liveness only; never calls Digiflazz |
+| GET | `/balance` | yes | Remaining deposit |
+| GET | `/price-list?kind=prepaid\|pasca` | yes | Cached for `PRICE_LIST_TTL_SECS` |
+| POST | `/transaction` | yes | Prepaid or postpaid |
+| POST | `/deposit` | yes | Creates a deposit ticket |
+
+Every route except `/health` requires `Authorization: Bearer <SERVICE_API_TOKEN>`.
+
+```sh
+curl -s localhost:8080/health
+curl -s -H "Authorization: Bearer $TOKEN" localhost:8080/balance
+curl -s -H "Authorization: Bearer $TOKEN" 'localhost:8080/price-list?kind=prepaid'
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"sku":"xld10","customer_no":"087800001230","ref_id":"svc-1","testing":true}' \
+  localhost:8080/transaction
+```
+
+### Configuration
+
+| Variable | Default | Notes |
+|---|---|---|
+| `DIGIFLAZZ_USERNAME` | – | required |
+| `DIGIFLAZZ_API_KEY` | – | required (dev or production key) |
+| `DIGIFLAZZ_BASE_URL` | `https://api.digiflazz.com/v1` | override for sandbox/tests |
+| `DIGIFLAZZ_ENV` | `development` | `production` changes the `testing` default |
+| `SERVICE_API_TOKEN` | – | required, min 16 characters |
+| `PORT` | `8080` | listen port |
+| `PRICE_LIST_TTL_SECS` | `300` | price list cache TTL |
+| `RUST_LOG` | `info,digiflazz_service=debug` | log filter |
+
+### `testing` behaviour
+
+`POST /transaction` accepts an optional `testing` flag:
+
+- **development** — when omitted, defaults to `true`, so a stray call cannot move
+  real balance.
+- **production** — when omitted, stays `false` (Digiflazz default) and logs a
+  warning naming the `ref_id`.
+
+### Error mapping
+
+Upstream conditions are reported as `502` with the Digiflazz code preserved,
+because they are not the caller's mistake:
+
+```json
+{ "error": "upstream_rejected", "rc": "83", "message": "Anda telah mencapai limitasi..." }
+```
+
+`rc 83` is the price-list rate limit, which is why the price list is cached.
+Malformed requests return `400` with a JSON body naming the offending field.
+
+### Docker
+
+```sh
+docker build -t digiflazz-service .
+docker run --rm -p 8080:8080 \
+  -e SERVICE_API_TOKEN=change-me-at-least-16 \
+  -e DIGIFLAZZ_USERNAME=... -e DIGIFLAZZ_API_KEY=... \
+  digiflazz-service
+```
 
 ## CLI
 
-The crate also ships a `digiflazz` binary:
+The SDK crate also ships a `digiflazz` binary:
 
 ```sh
-cargo install --path .          # installs `digiflazz` into ~/.cargo/bin
+cargo install --path crates/digiflazz   # installs `digiflazz` into ~/.cargo/bin
 # or run it without installing:
-cargo run -- --help
+cargo run -p digiflazz -- --help
 ```
 
 Credentials are read from the environment, and a `.env` file in the working

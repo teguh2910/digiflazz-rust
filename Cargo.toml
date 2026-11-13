@@ -1,29 +1,31 @@
-[package]
-name = "digiflazz"
+[workspace]
+members = ["crates/digiflazz", "crates/digiflazz-service"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.12"
 edition = "2021"
 rust-version = "1.70"
-authors = ["Karyana Yandi <halo@yandi.me>"]
-description = "Unofficial async Rust client for the Digiflazz API"
-homepage = "https://github.com/karyanayandi/digiflazz-sdk"
-repository = "https://github.com/karyanayandi/digiflazz-sdk"
 license = "MIT"
-readme = "README.md"
-keywords = ["digiflazz", "pulsa", "topup", "api-client"]
-categories = ["api-bindings", "asynchronous"]
+authors = ["Karyana Yandi <halo@yandi.me>"]
+repository = "https://github.com/karyanayandi/digiflazz-sdk"
+homepage = "https://github.com/karyanayandi/digiflazz-sdk"
 
-[dependencies]
+[workspace.dependencies]
+axum = "0.8"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+dotenvy = "0.15"
 hex = "0.4"
+http-body-util = "0.1"
 md-5 = "0.10"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_path_to_error = "0.1"
 thiserror = "2"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-
-[[bin]]
-name = "digiflazz"
-path = "src/main.rs"
-
-[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["trace", "request-id"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 wiremock = "0.6"

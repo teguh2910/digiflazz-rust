@@ -1,0 +1,29 @@
+[package]
+name = "digiflazz"
+description = "Unofficial async Rust client for the Digiflazz API"
+readme = "../../README.md"
+keywords = ["digiflazz", "pulsa", "topup", "api-client"]
+categories = ["api-bindings", "asynchronous"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+hex.workspace = true
+md-5.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[[bin]]
+name = "digiflazz"
+path = "src/main.rs"
+
+[dev-dependencies]
+wiremock.workspace = true

@@ -11,7 +11,11 @@ use crate::models::{
 const DEFAULT_BASE_URL: &str = "https://api.digiflazz.com/v1";
 
 /// Price list response, matching the requested [`PriceListKind`].
-#[derive(Debug, Clone)]
+///
+/// Serializes as the bare product array, so callers embedding it in their own
+/// response keep the Digiflazz shape.
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
 pub enum PriceList {
     /// Products returned for [`PriceListKind::Prepaid`].
     Prepaid(Vec<PrepaidProduct>),

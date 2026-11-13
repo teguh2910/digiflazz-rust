@@ -268,7 +268,7 @@ async fn prepaid_transaction_omits_postpaid_fields() {
 }
 
 #[tokio::test]
-async fn api_error_includes_status_and_message() {
+async fn http_error_with_rc_preserves_the_code() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
@@ -281,16 +281,36 @@ async fn api_error_includes_status_and_message() {
 
     let error = client(&server).cek_saldo().await.unwrap_err();
     match &error {
-        Error::Api { status, message } => {
-            assert_eq!(*status, 401);
+        Error::Rejected { rc, message } => {
+            assert_eq!(rc, "41");
             assert_eq!(message, "Signature Anda salah");
+        }
+        other => panic!("expected Rejected error, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn api_error_without_rc_keeps_the_status() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/cek-saldo"))
+        .respond_with(ResponseTemplate::new(503).set_body_string("Service Unavailable"))
+        .mount(&server)
+        .await;
+
+    let error = client(&server).cek_saldo().await.unwrap_err();
+    match &error {
+        Error::Api { status, message } => {
+            assert_eq!(*status, 503);
+            assert_eq!(message, "Service Unavailable");
         }
         other => panic!("expected Api error, got {other:?}"),
     }
 
     assert!(error
         .to_string()
-        .contains("request failed with status 401: Signature Anda salah"));
+        .contains("request failed with status 503: Service Unavailable"));
 }
 
 #[tokio::test]

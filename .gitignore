@@ -7,8 +7,8 @@
 
 # Environment
 .env
-.env.local
-.env.production.local
+.env.*
+!.env.example
 
 # Editor / OS
 .DS_Store
