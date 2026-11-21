@@ -104,14 +104,16 @@ impl Config {
         };
 
         let mock_mode = match std::env::var("DIGIFLAZZ_MOCK") {
-            Ok(v) => v.eq_ignore_ascii_case("true") || v == "1",
-            Err(_) => {
+            Ok(ref v) if v.eq_ignore_ascii_case("true") || v == "1" => true,
+            _ => {
                 let u = std::env::var("DIGIFLAZZ_USERNAME").unwrap_or_default();
                 let k = std::env::var("DIGIFLAZZ_API_KEY").unwrap_or_default();
                 u == "sandbox_user"
                     || u == "your_digiflazz_username"
+                    || u.is_empty()
                     || k == "sandbox_api_key"
                     || k == "your_digiflazz_api_key"
+                    || k.is_empty()
             }
         };
 
