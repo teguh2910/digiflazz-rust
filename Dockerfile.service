@@ -18,7 +18,9 @@ RUN mkdir -p crates/digiflazz/src crates/digiflazz-service/src \
 COPY crates ./crates
 RUN touch crates/digiflazz/src/main.rs crates/digiflazz/src/lib.rs \
     crates/digiflazz-service/src/main.rs crates/digiflazz-service/src/lib.rs \
-    && cargo build --release -p digiflazz-service
+    && cargo build --release -p digiflazz-service \
+    && cp target/release/digiflazz-service /build-bin \
+    && rm -rf target /usr/local/cargo/registry /usr/local/cargo/git
 
 FROM debian:bookworm-slim AS runtime
 
@@ -30,7 +32,7 @@ RUN useradd --system --create-home --uid 10001 app \
     && mkdir -p /tmp/digiflazz_cache \
     && chown -R app:app /tmp/digiflazz_cache
 
-COPY --from=builder /build/target/release/digiflazz-service /usr/local/bin/digiflazz-service
+COPY --from=builder /build-bin /usr/local/bin/digiflazz-service
 
 USER app
 EXPOSE 8080
