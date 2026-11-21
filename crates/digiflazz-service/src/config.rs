@@ -21,6 +21,8 @@ pub struct Config {
     pub price_list_ttl: Duration,
     /// Browser origins allowed to call the API. Empty disables CORS.
     pub cors_origins: Vec<String>,
+    /// Whether mock mode is active (returns simulated data without calling upstream).
+    pub mock_mode: bool,
 }
 
 /// Environment variables the service needs, reported together when missing.
@@ -101,6 +103,18 @@ impl Config {
             }
         };
 
+        let mock_mode = match std::env::var("DIGIFLAZZ_MOCK") {
+            Ok(v) => v.eq_ignore_ascii_case("true") || v == "1",
+            Err(_) => {
+                let u = std::env::var("DIGIFLAZZ_USERNAME").unwrap_or_default();
+                let k = std::env::var("DIGIFLAZZ_API_KEY").unwrap_or_default();
+                u == "sandbox_user"
+                    || u == "your_digiflazz_username"
+                    || k == "sandbox_api_key"
+                    || k == "your_digiflazz_api_key"
+            }
+        };
+
         Ok(Self {
             username: std::env::var("DIGIFLAZZ_USERNAME").unwrap_or_default(),
             api_key: std::env::var("DIGIFLAZZ_API_KEY").unwrap_or_default(),
@@ -111,6 +125,7 @@ impl Config {
             port,
             price_list_ttl,
             cors_origins: parse_origins(std::env::var("CORS_ORIGINS").ok()),
+            mock_mode,
         })
     }
 }

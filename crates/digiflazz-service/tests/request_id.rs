@@ -22,6 +22,7 @@ fn app_with_origins(base_url: String, cors_origins: Vec<String>) -> axum::Router
         port: 0,
         price_list_ttl: Duration::from_secs(300),
         cors_origins,
+        mock_mode: false,
     };
 
     routes::router(AppState::new(config).unwrap())

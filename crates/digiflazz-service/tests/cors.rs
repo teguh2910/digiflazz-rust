@@ -21,6 +21,7 @@ fn app_with(origins: &[&str]) -> axum::Router {
         port: 0,
         price_list_ttl: Duration::from_secs(300),
         cors_origins: origins.iter().map(|origin| (*origin).to_owned()).collect(),
+        mock_mode: false,
     };
 
     routes::router(AppState::new(config).unwrap())

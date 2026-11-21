@@ -68,6 +68,10 @@ pub async fn transaction(
         "creating transaction"
     );
 
+    if state.config().mock_mode {
+        return Ok(Json(crate::mock::get_mock_transaction(&request)));
+    }
+
     let transaction = state.client().transaksi(&request).await?;
     Ok(Json(transaction))
 }

@@ -38,9 +38,13 @@ pub fn router(state: AppState) -> Router {
 
     Router::new()
         .route("/health", get(health::health))
+        .route("/api/v1/health", get(health::health))
         .merge(protected)
         .layer(PropagateRequestIdLayer::new(header.clone()))
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http()
+                .on_failure(tower_http::trace::DefaultOnFailure::new().level(tracing::Level::WARN)),
+        )
         .layer(SetRequestIdLayer::new(header, MakeRequestUuid))
         .layer(cors)
         .with_state(state)

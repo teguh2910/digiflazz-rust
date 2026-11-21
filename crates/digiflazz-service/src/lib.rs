@@ -7,6 +7,7 @@ pub mod cache;
 pub mod config;
 pub mod error;
 pub mod json;
+pub mod mock;
 pub mod routes;
 pub mod state;
 

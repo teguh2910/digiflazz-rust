@@ -36,6 +36,18 @@ pub async fn price_list(
         Some(other) => return Err(ApiError::unknown_kind(other)),
     };
 
+    if state.config().mock_mode {
+        let products = crate::mock::get_mock_price_list(kind);
+        let kind_str = match kind {
+            PriceListKind::Prepaid => "prepaid",
+            PriceListKind::Pasca => "pasca",
+        };
+        return Ok(Json(PriceListResponse {
+            kind: kind_str,
+            products,
+        }));
+    }
+
     let client = state.client();
     let products = state.cache().get(kind, client.daftar_harga(kind)).await?;
 

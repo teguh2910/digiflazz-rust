@@ -27,6 +27,7 @@ fn config(base_url: String, production: bool, ttl: Duration) -> Config {
         port: 0,
         price_list_ttl: ttl,
         cors_origins: Vec::new(),
+        mock_mode: false,
     }
 }
 

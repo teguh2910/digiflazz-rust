@@ -40,6 +40,10 @@ pub async fn deposit(
         "creating deposit ticket"
     );
 
+    if state.config().mock_mode {
+        return Ok(Json(crate::mock::get_mock_deposit(&request)));
+    }
+
     let ticket = state.client().deposit(&request).await?;
     Ok(Json(ticket))
 }

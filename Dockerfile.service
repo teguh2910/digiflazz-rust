@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+
+FROM rust:1-slim AS builder
+
+WORKDIR /build
+
+COPY Cargo.toml Cargo.lock ./
+COPY crates/digiflazz/Cargo.toml crates/digiflazz/Cargo.toml
+COPY crates/digiflazz-service/Cargo.toml crates/digiflazz-service/Cargo.toml
+RUN mkdir -p crates/digiflazz/src crates/digiflazz-service/src \
+    && echo 'fn main() {}' > crates/digiflazz/src/main.rs \
+    && echo '' > crates/digiflazz/src/lib.rs \
+    && echo 'fn main() {}' > crates/digiflazz-service/src/main.rs \
+    && echo '' > crates/digiflazz-service/src/lib.rs \
+    && cargo build --release -p digiflazz-service \
+    && rm -rf crates/digiflazz/src crates/digiflazz-service/src
+
+COPY crates ./crates
+RUN touch crates/digiflazz/src/main.rs crates/digiflazz/src/lib.rs \
+    crates/digiflazz-service/src/main.rs crates/digiflazz-service/src/lib.rs \
+    && cargo build --release -p digiflazz-service
+
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --system --create-home --uid 10001 app
+
+COPY --from=builder /build/target/release/digiflazz-service /usr/local/bin/digiflazz-service
+
+USER app
+EXPOSE 8080
+
+ENV PORT=8080
+ENV RUST_LOG=info,digiflazz_service=info
+
+ENTRYPOINT ["/usr/local/bin/digiflazz-service"]
